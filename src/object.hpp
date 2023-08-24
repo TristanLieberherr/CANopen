@@ -12,26 +12,14 @@ namespace CANopen
         const AccessType accessType;
         const uint32_t size;
         ObjectEntryBase(void *src, uint8_t accessType, uint32_t size) : dataSrc(src), accessType{accessType}, size(size) {}
-        virtual int checkLimits(void *data) = 0;
+        virtual bool check() = 0;
     };
 
     template <typename T>
     struct ObjectEntry : public ObjectEntryBase
     {
         ObjectEntry(void *src, uint8_t accessType) : ObjectEntryBase(src, accessType, sizeof(T)) {}
-        inline int checkLimits(void *data) { return 0; }
-    };
-
-    template <typename T>
-    struct LimitedObjectEntry : public ObjectEntryBase
-    {
-        const T minVal, maxVal;
-        LimitedObjectEntry(void *src, uint8_t accessType, T minVal, T maxVal) : ObjectEntryBase(src, accessType, sizeof(T)), minVal(minVal), maxVal(maxVal) {}
-        inline int checkLimits(void *data)
-        {
-            T value = *(T *)data;
-            return value < minVal ? -1 : (value > maxVal ? 1 : 0);
-        }
+        bool check() { return true; }
     };
 
     class Object
@@ -59,7 +47,7 @@ namespace CANopen
         // Methods called by application
         uint8_t getCount();
         template <typename T>
-        inline bool getValue(uint8_t subindex, T *value)
+        bool getValue(uint8_t subindex, T *value)
         {
             if (!isSubValid(subindex) || sizeof(T) != entries[subindex]->size)
                 return false;
@@ -67,7 +55,7 @@ namespace CANopen
             return true;
         }
         template <typename T>
-        inline bool setValue(uint8_t subindex, T value)
+        bool setValue(uint8_t subindex, T value)
         {
             if (!isSubValid(subindex) || sizeof(T) != entries[subindex]->size)
                 return false;
