@@ -42,17 +42,17 @@ namespace CANopen
         template <typename T>
         bool getValue(uint8_t subindex, T *value)
         {
-            if (!isSubValid(subindex) || sizeof(T) != entries[subindex]->size)
+            if (!isSubValid(subindex) || sizeof(T) != entries[subindex].size)
                 return false;
-            *value = *(T *)entries[subindex]->dataSrc;
+            *value = *(T *)entries[subindex].dataSrc;
             return true;
         }
         template <typename T>
         bool setValue(uint8_t subindex, T value)
         {
-            if (!isSubValid(subindex) || sizeof(T) != entries[subindex]->size)
+            if (!isSubValid(subindex) || sizeof(T) != entries[subindex].size)
                 return false;
-            *(T *)entries[subindex]->dataSrc = value;
+            *(T *)entries[subindex].dataSrc = value;
             return true;
         }
     };
