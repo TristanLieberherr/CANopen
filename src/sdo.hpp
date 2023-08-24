@@ -23,6 +23,7 @@
 #define SDO_BLOCK_DATA_OFFSET 1
 #define SDO_BLOCK_SEQNO_MIN 1
 #define SDO_BLOCK_SEQNO_MAX 127
+#define SDO_BLOCK_MAX_RETRIES 1
 
 namespace CANopen
 {
@@ -55,6 +56,7 @@ namespace CANopen
             uint16_t seqno;
             uint16_t ackseq;
             uint32_t lastBlockRemainingBytes;
+            unsigned retries;
         } transferData;
         struct
         {
