@@ -27,16 +27,16 @@ SDOAbortCodes Object::writeBytes(uint8_t subindex, uint8_t *bytes, uint32_t size
 {
     if (!isSubValid(subindex))
         return SDOAbortCode_SubindexNonExistent;
-    ObjectEntryBase *entry = (ObjectEntryBase *)entries[subindex];
-    if (!entry->accessType.bits.writeable)
+    ObjectEntry entry = entries[subindex];
+    if (!entry.accessType.bits.writeable)
         return SDOAbortCode_AttemptWriteOnReadOnly;
-    if (size != entry->size)
+    if (size != entry.size)
         return SDOAbortCode_DataTypeMismatch_LengthParameterMismatch;
     SDOAbortCodes code = preWriteBytes(subindex, bytes, size, node);
     switch (code)
     {
     case SDOAbortCode_OK:
-        memcpy((void *)entry->dataSrc, bytes, size);
+        memcpy((void *)entry.dataSrc, bytes, size);
         postWriteBytes(subindex, bytes, size, node);
         return SDOAbortCode_OK;
     case SDOAbortCode_CancelWrite:
@@ -50,15 +50,15 @@ SDOAbortCodes Object::readBytes(uint8_t subindex, uint8_t *bytes, uint32_t size,
 {
     if (!isSubValid(subindex))
         return SDOAbortCode_SubindexNonExistent;
-    ObjectEntryBase *entry = (ObjectEntryBase *)entries[subindex];
-    if (!entry->accessType.bits.readable)
+    ObjectEntry entry = entries[subindex];
+    if (!entry.accessType.bits.readable)
         return SDOAbortCode_AttemptReadOnWriteOnly;
-    if (size + offset > entry->size)
+    if (size + offset > entry.size)
         return SDOAbortCode_DataTypeMismatch_LengthParameterMismatch;
     SDOAbortCodes code = preReadBytes(subindex, bytes, size, offset);
     if (code != SDOAbortCode_OK)
         return code;
-    memcpy(bytes, (uint8_t *)entry->dataSrc + offset, size);
+    memcpy(bytes, (uint8_t *)entry.dataSrc + offset, size);
     postReadBytes(subindex, bytes, size, offset);
     return SDOAbortCode_OK;
 }
@@ -72,17 +72,17 @@ uint32_t Object::getSize(uint8_t subindex)
 {
     if (!isSubValid(subindex))
         return 0;
-    return entries[subindex]->size;
+    return entries[subindex].size;
 }
 
 AccessType Object::getAccessType(uint8_t subindex)
 {
     if (!isSubValid(subindex))
         return AccessType{0};
-    return entries[subindex]->accessType;
+    return entries[subindex].accessType;
 }
 
 uint8_t Object::getCount()
 {
-    return *(uint8_t *)entries[OBJECT_INDEX_COUNT]->dataSrc;
+    return *(uint8_t *)entries[OBJECT_INDEX_COUNT].dataSrc;
 }

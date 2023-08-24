@@ -6,12 +6,11 @@ ENTRY_MAX_SIZE = 1024
 
 class ObjectBase(ABC):
     """This is the base class for OD's objects"""
-    def __init__(self, index: int, entries: list[Variable], cppEntryName: str = "ObjectEntry", cppObjectName: str = "Object", cppBaseEntryName: str = "ObjectEntryBase") -> None:
+    def __init__(self, index: int, entries: list[Variable], cppEntryName: str = "ObjectEntry", cppObjectName: str = "Object") -> None:
         self.index: int = index
         self.subNumber: int = len(entries)
         self.cppEntryName: str = cppEntryName
         self.cppObjectName: str = cppObjectName
-        self.cppBaseEntryName: str = cppBaseEntryName
         self.varName: str = "x%X" % self.index
         self.entries: list[ObjectEntry] = []
         ## Check for valid data type, access type and data size (for strings)
@@ -45,16 +44,13 @@ class ObjectBase(ABC):
         """Returns the C++ object declaration, ex. Object x1003 = Object(...)"""
         return f"{self.cppObjectName} {self.varName} = {self.cppObjectName}({self.index}, {self.subNumber}, entries.{self.varName})"
     
-    def renderEntryList(self) -> str:
-        """Returns the C++ entry list, ex. ObjectEntryBase *x1003[] = {&x1003sub0, ...}"""
-        subs = [f"&{self.varName}sub{sub}" for sub in range(len(self.entries))]
-        return f"const {self.cppBaseEntryName} *{self.varName}[{len(self.entries)}] = {{{', '.join(subs)}}}"
-    
     @abstractmethod
-    def renderData(self) -> list[str]: return []
+    def renderData(self) -> list[str]:
+        return ""
 
     @abstractmethod
-    def renderEntry(self) -> list[str]: return []
+    def renderEntry(self) -> str:
+        return ""
 
 
 class VarObject(ObjectBase):
@@ -66,9 +62,9 @@ class VarObject(ObjectBase):
         """Returns the C++ data declaration, ex. uint16_t x1003 = 42"""
         return [self.entry.renderData(self.varName)]
     
-    def renderEntry(self) -> list[str]:
-        """Returns the C+++ object entry declaration, ex. ObjectEntry<T> x1003sub0 = ObjectEntry<T>(...)"""
-        return [self.entry.renderEntry(self.cppEntryName, f"{self.varName}sub0", self.varName)]
+    def renderEntry(self) -> str:
+        """Returns the C++ object entry declaration, ex. ObjectEntry x1003[1] = {ObjectEntry(...)}"""
+        return f"{self.cppEntryName} {self.varName}[{self.subNumber}] = {{{self.entry.renderEntry(self.cppEntryName, self.varName)}}}"
 
 
 class ArrayObject(ObjectBase):
@@ -89,11 +85,11 @@ class ArrayObject(ObjectBase):
         arr = f"{self.entries[1].ctype} {self.varName}[{self.subNumber - 1}] = {{{init}}}"
         return [sub, arr]
     
-    def renderEntry(self) -> list[str]:
-        """Returns the C+++ object entry declaration, ex. ObjectEntry<T> x1003sub0 = ObjectEntry<T>(...)"""
-        sub0 = self.entries[0].renderEntry(self.cppEntryName, self.sub0Name, self.sub0Name)
-        subs = [entry.renderEntry(self.cppEntryName, f"{self.varName}sub{sub + 1}", f"{self.varName}[{sub}]") for sub, entry in enumerate(self.entries[1:])]
-        return [sub0, *subs]
+    def renderEntry(self) -> str:
+        """Returns the C+++ object entry declaration, ex. ObjectEntry x1003[4] = {ObjectEntry(...), ...}"""
+        sub = self.entries[0].renderEntry(self.cppEntryName, self.sub0Name)
+        init = ", ".join([sub, *[entry.renderEntry(self.cppEntryName, f"{self.varName}[{i}]") for i, entry in enumerate(self.entries[1:])]])
+        return f"{self.cppEntryName} {self.varName}[{self.subNumber}] = {{{init}}}"
 
 
 class RecordObject(ObjectBase):
@@ -106,6 +102,7 @@ class RecordObject(ObjectBase):
         fields = "; ".join([entry.renderData(f"sub{i}") for i, entry in enumerate(self.entries)]) + ";"
         return [f"struct {{{fields}}} {self.varName}"]
     
-    def renderEntry(self) -> list[str]:
-        """Returns the C+++ object entry declaration, ex. ObjectEntry<T> x1003sub0 = ObjectEntry<T>(...)"""
-        return [entry.renderEntry(self.cppEntryName, f"{self.varName}sub{sub}", f"{self.varName}.sub{sub}") for sub, entry in enumerate(self.entries)]
+    def renderEntry(self) -> str:
+        """Returns the C+++ object entry declaration, ex. ObjectEntry x1003[3] = {ObjectEntry(...), ...}"""
+        init = ", ".join([entry.renderEntry(self.cppEntryName, f"{self.varName}.sub{i}") for i, entry in enumerate(self.entries)])
+        return f"{self.cppEntryName} {self.varName}[{self.subNumber}] = {{{init}}}"
