@@ -41,6 +41,7 @@ namespace {{namespace}}
             {{object.renderObject()}};
             {% endfor %}
         } objects;
+        const ObjectDictionnaryData defaultData;
         Object *objectsArray[OD_OBJECTS_COUNT] = {&objects.{{objectNames|join(', &objects.')}}};
         class Node &node;
 
