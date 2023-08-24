@@ -12,13 +12,14 @@ namespace CANopen
         const AccessType accessType;
         const uint32_t size;
         ObjectEntryBase(void *src, uint8_t accessType, uint32_t size) : dataSrc(src), accessType{accessType}, size(size) {}
-        inline int checkLimits(void *data) { return 0; }
+        virtual int checkLimits(void *data) = 0;
     };
 
     template <typename T>
     struct ObjectEntry : public ObjectEntryBase
     {
         ObjectEntry(void *src, uint8_t accessType) : ObjectEntryBase(src, accessType, sizeof(T)) {}
+        inline int checkLimits(void *data) { return 0; }
     };
 
     template <typename T>
