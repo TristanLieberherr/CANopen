@@ -1,4 +1,8 @@
 # CANopen
+
+## Edit : 19.09.2023
+**This repo has been moved to heig-vd-iai. This repo will be archived and will no longer be maintained.**
+
 ## Introduction
 This is a C++14 written CANopen slave library. It is based on the official [CIA 301 CANopen application layer and communication profile](https://www.can-cia.org/groups/specifications/) document.  
 This implementation features the following:
